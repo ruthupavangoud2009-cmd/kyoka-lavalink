@@ -1,0 +1,29 @@
+# ==============================================================================
+# RENDER BLUEPRINT - KYOKA LAVALINK V4 (FREE TIER)
+# ==============================================================================
+# IMPORTANT:
+# - Plan: free (Zero unexpected charges, 100% Free Web Service)
+# - Memory: 512 MB Container RAM limit (Optimized JVM heap -Xmx384m)
+# - Healthcheck: /version (Unauthenticated HTTP 200 endpoint)
+# ==============================================================================
+
+services:
+  - type: web
+    name: kyoka-lavalink
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /version
+    autoDeploy: true
+    envVars:
+      - key: LAVALINK_SERVER_PASSWORD
+        generateValue: true
+      - key: JAVA_OPTS
+        value: "-Xmx384m -Xms128m -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication"
+      - key: SPOTIFY_CLIENT_ID
+        sync: false
+      - key: SPOTIFY_CLIENT_SECRET
+        sync: false

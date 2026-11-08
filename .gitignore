@@ -1,0 +1,25 @@
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+
+# Local Lavalink runtime artifacts
+plugins/
+logs/
+*.log
+application-local.yml
+Lavalink.jar
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

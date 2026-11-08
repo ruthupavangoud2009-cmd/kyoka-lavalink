@@ -1,0 +1,32 @@
+name: 24/7 Render Keep-Alive Ping
+
+on:
+  schedule:
+    # Trigger every 10 minutes (well under Render Free's 15m idle shutdown window)
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    name: Ping Lavalink Node
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Execute Keep-Alive Probe
+        env:
+          RENDER_SERVICE_URL: ${{ secrets.RENDER_SERVICE_URL || vars.RENDER_SERVICE_URL }}
+        run: |
+          if [ -z "$RENDER_SERVICE_URL" ]; then
+            echo "::warning ::RENDER_SERVICE_URL is not configured in GitHub Secrets or Variables."
+            echo "Add RENDER_SERVICE_URL (e.g. https://kyoka-lavalink.onrender.com) to Settings -> Secrets and variables -> Actions to activate automated 24/7 pinging."
+            exit 0
+          fi
+          python scripts/keepalive.py --url "$RENDER_SERVICE_URL" --once

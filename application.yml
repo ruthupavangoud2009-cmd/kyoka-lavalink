@@ -1,0 +1,133 @@
+# ==============================================================================
+# KYOKA LAVALINK V4 - PRODUCTION CONFIGURATION
+# ==============================================================================
+# Compatible with Lavalink v4.x, Wavelink 3.x+, and Kyoka 3.0 Discord Bot.
+# Optimized specifically for Render Free Tier (512 MB Container Memory Limit).
+# ==============================================================================
+
+server:
+  # Render automatically injects the PORT environment variable (e.g. 10000).
+  # If running locally or in Docker without PORT, defaults to 2333.
+  port: ${PORT:2333}
+  address: 0.0.0.0
+  http2:
+    enabled: false
+
+lavalink:
+  plugins:
+    # 1. YouTube & YouTube Music Plugin (official replacement for built-in source)
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.2"
+      repository: "https://maven.lavalink.dev/releases"
+      snapshot: false
+
+    # 2. LavaSrc Plugin (Spotify metadata & search-based track resolution)
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.8.3"
+      repository: "https://maven.lavalink.dev/releases"
+      snapshot: false
+
+  server:
+    # Accepts either LAVALINK_SERVER_PASSWORD or LAVALINK_PASSWORD
+    password: "${LAVALINK_SERVER_PASSWORD:${LAVALINK_PASSWORD:youshallnotpass}}"
+
+    sources:
+      # Built-in YouTube MUST be false when dev.lavalink.youtube plugin is loaded
+      youtube: false
+      # Built-in audio sources
+      soundcloud: true
+      bandcamp: true
+      twitch: true
+      vimeo: true
+      # HTTP source handles direct audio links (MP3, FLAC, AAC, OGG) and live radio streams (Icecast/Shoutcast)
+      http: true
+      # Local file playback disabled for cloud security
+      local: false
+
+    filters:
+      volume: true
+      equalizer: true
+      karaoke: true
+      timescale: true
+      tremolo: true
+      vibrato: true
+      distortion: true
+      rotation: true
+      channelMix: true
+      lowPass: true
+
+    # Audio Engine & Buffer tuning for low latency & memory efficiency on 512MB RAM
+    bufferDurationMs: 4000
+    frameBufferDurationMs: 5000
+    opusEncodingQuality: 10
+    resamplingQuality: HIGH
+    trackStuckThresholdMs: 10000
+    useSeekGhosting: true
+    playerUpdateInterval: 5
+    youtubeSearchEnabled: true
+    soundcloudSearchEnabled: true
+    gc-warnings: false
+
+# ==============================================================================
+# PLUGIN SPECIFIC CONFIGURATIONS
+# ==============================================================================
+plugins:
+  youtube:
+    enabled: true
+    allowSearch: true
+    allowDirectVideoIds: true
+    allowDirectPlaylistIds: true
+    # Client cascade order: MUSIC provides best audio streams; WEB & ANDROID fallbacks
+    clients:
+      - MUSIC
+      - WEB
+      - ANDROID_VR
+      - WEBEMBEDDED
+
+  lavasrc:
+    providers:
+      # Order of resolution providers for Spotify tracks:
+      # 1. First try exact match via ISRC code on YouTube Music
+      # 2. Fall back to search query: "Artist - Title"
+      - "ytsearch:\"%ISRC%\""
+      - "ytsearch:%QUERY%"
+    sources:
+      spotify: true
+      applemusic: false
+      deezer: false
+      yandexmusic: false
+      flowerytts: false
+      youtube: false
+    spotify:
+      clientId: "${SPOTIFY_CLIENT_ID:}"
+      clientSecret: "${SPOTIFY_CLIENT_SECRET:}"
+      countryCode: "US"
+      playlistLoadLimit: 6
+      albumLoadLimit: 6
+      resolveExternalSources: true
+
+# ==============================================================================
+# LOGGING CONFIGURATION
+# ==============================================================================
+logging:
+  file:
+    path: ./logs/
+    max-history: 7
+    max-size: 50MB
+  level:
+    root: INFO
+    lavalink: INFO
+    org.springframework: WARN
+  request:
+    # Disable request logging to keep Render console clean from periodic health checks
+    enabled: false
+    includeClientInfo: false
+    includeHeaders: false
+    includeQueryString: false
+    includePayload: false
+    maxPayloadLength: 10000
+
+# ==============================================================================
+# METRICS CONFIGURATION
+# ==============================================================================
+metrics:
+  # Prometheus scraping disabled by default to save CPU/RAM on free tier
+  enabled: false

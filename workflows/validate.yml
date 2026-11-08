@@ -1,0 +1,35 @@
+name: Configuration Validation & Quality Assurance
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Configuration & Blueprints
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate Project Configuration
+        run: |
+          python scripts/validate_config.py
+
+      - name: Test Password Generator
+        run: |
+          python scripts/generate_password.py
+
+      - name: Check Shell Scripts Executable Flags
+        run: |
+          chmod +x entrypoint.sh scripts/*.sh
+          ls -la entrypoint.sh scripts/*.sh

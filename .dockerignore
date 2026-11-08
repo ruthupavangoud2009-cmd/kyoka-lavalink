@@ -1,0 +1,26 @@
+# Version control
+.git
+.github
+
+# Documentation and notes
+docs
+*.md
+LICENSE
+
+# Local environment and secrets
+.env
+.env.*
+
+# Local test and automation scripts
+scripts
+tests
+*.bat
+*.ps1
+*.sh
+!entrypoint.sh
+
+# Temporary and cache files
+__pycache__
+*.pyc
+.idea
+.vscode
