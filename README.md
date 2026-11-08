@@ -82,7 +82,7 @@ Production-ready, highly optimized **Lavalink V4** audio node engineered for **K
    - **Service Name**: `kyoka-lavalink`
    - **Plan**: `Free`
    - **Runtime**: `Docker`
-   - **Healthcheck Path**: `/version`
+   - **Healthcheck**: Managed natively via Render TCP Port Readiness (prevents 401 unauthenticated probe warnings)
 6. Click **Apply**. Render will generate a secure `LAVALINK_SERVER_PASSWORD` and deploy the service.
 
 ### Method B: Manual Web Service Setup

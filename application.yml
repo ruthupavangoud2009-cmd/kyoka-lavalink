@@ -131,3 +131,4 @@ logging:
 metrics:
   # Prometheus scraping disabled by default to save CPU/RAM on free tier
   enabled: false
+

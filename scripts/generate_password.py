@@ -29,3 +29,4 @@ if __name__ == "__main__":
     print("\n2. In Kyoka Discord Bot (.env file or Render Environment):")
     print("   LAVALINK_PASSWORD = " + password)
     print("=" * 64)
+

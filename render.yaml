@@ -4,7 +4,9 @@
 # IMPORTANT:
 # - Plan: free (Zero unexpected charges, 100% Free Web Service)
 # - Memory: 512 MB Container RAM limit (Optimized JVM heap -Xmx384m)
-# - Healthcheck: /version (Unauthenticated HTTP 200 endpoint)
+# - Healthcheck: Omitted on purpose. Render natively validates container readiness
+#   via TCP port check on 0.0.0.0:$PORT. This prevents unauthenticated HTTP 401
+#   errors from Render's health checker while keeping Lavalink fully password-protected.
 # ==============================================================================
 
 services:
@@ -16,7 +18,6 @@ services:
     branch: main
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    healthCheckPath: /version
     autoDeploy: true
     envVars:
       - key: LAVALINK_SERVER_PASSWORD

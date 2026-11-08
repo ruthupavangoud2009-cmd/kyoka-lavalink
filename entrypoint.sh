@@ -51,3 +51,4 @@ java $JAVA_OPTS \
 
 PID=$!
 wait "$PID"
+

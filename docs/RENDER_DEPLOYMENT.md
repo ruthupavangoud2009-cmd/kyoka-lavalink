@@ -8,9 +8,9 @@ This guide provides step-by-step instructions for deploying **Kyoka Lavalink V4*
 
 > [!IMPORTANT]
 > - Always select the **Free** instance type.
-> - Render Free allows **512 MB RAM** and **0.1 CPU**.
+> - Render Free provides **512 MB RAM** and **0.1 CPU**.
 > - Memory settings in this repository (`-Xmx384m`) are pre-calibrated to stay safely under the 512 MB limit to prevent Out-Of-Memory (OOM) crashes.
-> - Never upgrade to a paid plan unless you intentionally want paid features.
+> - **Health Checks**: We intentionally **do not** set `healthCheckPath` in `render.yaml`. Render automatically uses native **TCP port checks** on `0.0.0.0:$PORT`. This prevents unauthenticated HTTP 401 errors from Render's health checker while keeping Lavalink fully password-protected.
 
 ---
 
@@ -25,7 +25,6 @@ Render Blueprints automatically configure the service using `render.yaml`.
    - **Service Name**: `kyoka-lavalink`
    - **Runtime**: `Docker`
    - **Plan**: `Free`
-   - **Health Check Path**: `/version`
    - **Auto-generated Password**: `LAVALINK_SERVER_PASSWORD`
 5. Click **Apply**.
 6. Render will automatically build the Docker image, download plugins, and start the service!
@@ -47,7 +46,7 @@ If you prefer setting up manually:
    - **Docker Build Context Directory**: `.`
    - **Instance Type**: **Free** ($0/month)
 4. Expand **Advanced**:
-   - **Health Check Path**: `/version`
+   - **Health Check Path**: *Leave BLANK* (uses native TCP port check, avoids 401 warnings)
    - **Auto-Deploy**: `Yes`
 5. Under **Environment Variables**, add:
    - `LAVALINK_SERVER_PASSWORD`: `<your-random-secure-password>`
@@ -93,10 +92,10 @@ While Render builds and deploys your container, watch the **Logs** tab in Render
    Loaded plugin LavaSrc v4.8.3
    ```
 
-4. **Health Check Passed**:
+4. **Service Live**:
    ```
    Lavalink is ready to accept connections.
-   Health check on /version succeeded. Service is live.
+   Port check on 0.0.0.0:10000 succeeded. Service is live.
    ```
 
 Your public URL will be:

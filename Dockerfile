@@ -32,8 +32,8 @@ USER 322
 # Expose default Lavalink port (Render routes dynamic $PORT to the container)
 EXPOSE 2333
 
-# Native container healthcheck verifying Lavalink v4 /version endpoint
+# Native TCP port readiness check (does not send unauthenticated HTTP traffic)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD curl -fsS "http://127.0.0.1:${PORT:-2333}/version" || exit 1
+    CMD nc -z 127.0.0.1 "${PORT:-2333}" || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]

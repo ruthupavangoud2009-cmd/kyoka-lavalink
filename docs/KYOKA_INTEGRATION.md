@@ -113,3 +113,4 @@ python scripts/test_websocket.py --url https://kyoka-lavalink.onrender.com --pas
 # Test Track Search Resolution
 python scripts/test_rest.py --url https://kyoka-lavalink.onrender.com --password your_password
 ```
+

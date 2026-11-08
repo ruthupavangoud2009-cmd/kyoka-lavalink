@@ -22,9 +22,9 @@ def log_check(name: str, passed: bool, detail: str = ""):
     return passed
 
 def validate_files():
-    print("=" * 64)
+    print("=" * 68)
     print(" 1. PROJECT FILES VALIDATION")
-    print("=" * 64)
+    print("=" * 68)
     required_files = [
         "Dockerfile",
         "entrypoint.sh",
@@ -44,20 +44,17 @@ def validate_files():
     return all_ok
 
 def validate_dockerfile():
-    print("\n" + "=" * 64)
+    print("\n" + "=" * 68)
     print(" 2. DOCKERFILE VALIDATION")
-    print("=" * 64)
+    print("=" * 68)
     df_path = ROOT_DIR / "Dockerfile"
     if not df_path.exists():
         return False
     content = df_path.read_text(encoding="utf-8")
-    
+
     all_ok = True
     has_base = "ghcr.io/lavalink-devs/lavalink:4-alpine" in content
     all_ok = log_check("Official Base Image (ghcr.io/lavalink-devs/lavalink:4-alpine)", has_base) and all_ok
-
-    has_healthcheck = "HEALTHCHECK" in content and "/version" in content
-    all_ok = log_check("Native Container Healthcheck (/version)", has_healthcheck) and all_ok
 
     has_entrypoint = "ENTRYPOINT" in content and "entrypoint.sh" in content
     all_ok = log_check("Entrypoint Configuration (entrypoint.sh)", has_entrypoint) and all_ok
@@ -68,16 +65,16 @@ def validate_dockerfile():
     return all_ok
 
 def validate_application_yml():
-    print("\n" + "=" * 64)
+    print("\n" + "=" * 68)
     print(" 3. APPLICATION.YML VALIDATION")
-    print("=" * 64)
+    print("=" * 68)
     app_path = ROOT_DIR / "application.yml"
     if not app_path.exists():
         return False
     content = app_path.read_text(encoding="utf-8")
 
     all_ok = True
-    
+
     # Check port handling
     has_port = bool(re.search(r"port:\s*\$\{PORT:\d+\}", content))
     all_ok = log_check("Dynamic Port Variable (${PORT:...})", has_port) and all_ok
@@ -109,9 +106,9 @@ def validate_application_yml():
     return all_ok
 
 def validate_render_yaml():
-    print("\n" + "=" * 64)
+    print("\n" + "=" * 68)
     print(" 4. RENDER.YAML BLUEPRINT VALIDATION")
-    print("=" * 64)
+    print("=" * 68)
     r_path = ROOT_DIR / "render.yaml"
     if not r_path.exists():
         return False
@@ -125,8 +122,9 @@ def validate_render_yaml():
     has_docker = bool(re.search(r"runtime:\s*docker", content))
     all_ok = log_check("Runtime set to Docker", has_docker) and all_ok
 
-    has_healthpath = bool(re.search(r"healthCheckPath:\s*/version", content))
-    all_ok = log_check("Health check path points to /version", has_healthpath) and all_ok
+    # Verify no unauthenticated HTTP healthCheckPath is configured
+    no_incompatible_health = "healthCheckPath: /version" not in content
+    all_ok = log_check("Render TCP Port Health Check Strategy (Prevents 401 Health Check Failures)", no_incompatible_health) and all_ok
 
     has_memory_opts = "-Xmx384m" in content
     all_ok = log_check("JVM Memory Heap Limit tuned for Free Tier (-Xmx384m)", has_memory_opts) and all_ok
@@ -143,14 +141,14 @@ def main():
     ok3 = validate_application_yml()
     ok4 = validate_render_yaml()
 
-    print("\n" + "=" * 64)
+    print("\n" + "=" * 68)
     if ok1 and ok2 and ok3 and ok4:
         print("\033[92m [SUCCESS] ALL CONFIGURATIONS ARE VALID AND READY FOR DEPLOYMENT!\033[0m")
-        print("=" * 64 + "\n")
+        print("=" * 68 + "\n")
         return 0
     else:
         print("\033[91m [ERROR] VALIDATION FAILED! Please inspect errors above.\033[0m")
-        print("=" * 64 + "\n")
+        print("=" * 68 + "\n")
         return 1
 
 if __name__ == "__main__":

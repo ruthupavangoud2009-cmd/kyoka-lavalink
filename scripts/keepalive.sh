@@ -18,3 +18,4 @@ while true; do
     echo "[$DATE] Keep-alive ping -> HTTP $STATUS"
     sleep "$INTERVAL"
 done
+

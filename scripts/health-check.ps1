@@ -11,3 +11,4 @@ if (-not $Password) {
 }
 
 python "$PSScriptRoot\health_check.py" --url "$Url" --password "$Password"
+
