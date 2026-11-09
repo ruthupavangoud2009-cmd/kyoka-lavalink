@@ -1,12 +1,9 @@
 # ==============================================================================
 # RENDER BLUEPRINT - KYOKA LAVALINK V4 (FREE TIER)
 # ==============================================================================
-# IMPORTANT:
-# - Plan: free (Zero unexpected charges, 100% Free Web Service)
-# - Memory: 512 MB Container RAM limit (Optimized JVM heap -Xmx384m)
-# - Healthcheck: Omitted on purpose. Render natively validates container readiness
-#   via TCP port check on 0.0.0.0:$PORT. This prevents unauthenticated HTTP 401
-#   errors from Render's health checker while keeping Lavalink fully password-protected.
+# Plan: free (Zero unexpected charges, 100% Free Web Service)
+# Architecture: Dual-layer (Nginx Edge Gateway + Isolated Lavalink Loopback Backend)
+# Healthcheck: /healthz (Public HTTP check served by Nginx verifying backend health)
 # ==============================================================================
 
 services:
@@ -18,12 +15,13 @@ services:
     branch: main
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    healthCheckPath: /healthz
     autoDeploy: true
     envVars:
       - key: LAVALINK_SERVER_PASSWORD
         generateValue: true
       - key: JAVA_OPTS
-        value: "-Xmx384m -Xms128m -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication"
+        value: "-Xmx256m -Xms96m -XX:MaxMetaspaceSize=72m -XX:ReservedCodeCacheSize=48m -XX:MaxDirectMemorySize=32m -Xss384k -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication"
       - key: SPOTIFY_CLIENT_ID
         sync: false
       - key: SPOTIFY_CLIENT_SECRET

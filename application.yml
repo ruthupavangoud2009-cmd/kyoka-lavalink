@@ -2,14 +2,12 @@
 # KYOKA LAVALINK V4 - PRODUCTION CONFIGURATION
 # ==============================================================================
 # Compatible with Lavalink v4.x, Wavelink 3.x+, and Kyoka 3.0 Discord Bot.
-# Optimized specifically for Render Free Tier (512 MB Container Memory Limit).
+# Bound strictly to loopback (127.0.0.1:2333) behind Nginx Edge Gateway.
 # ==============================================================================
 
 server:
-  # Render automatically injects the PORT environment variable (e.g. 10000).
-  # If running locally or in Docker without PORT, defaults to 2333.
-  port: ${PORT:2333}
-  address: 0.0.0.0
+  port: 2333
+  address: 127.0.0.1
   http2:
     enabled: false
 
@@ -26,8 +24,8 @@ lavalink:
       snapshot: false
 
   server:
-    # Accepts either LAVALINK_SERVER_PASSWORD or LAVALINK_PASSWORD
-    password: "${LAVALINK_SERVER_PASSWORD:${LAVALINK_PASSWORD:youshallnotpass}}"
+    # Strictly requires LAVALINK_SERVER_PASSWORD from environment; no insecure fallbacks
+    password: "${LAVALINK_SERVER_PASSWORD}"
 
     sources:
       # Built-in YouTube MUST be false when dev.lavalink.youtube plugin is loaded
@@ -117,7 +115,6 @@ logging:
     lavalink: INFO
     org.springframework: WARN
   request:
-    # Disable request logging to keep Render console clean from periodic health checks
     enabled: false
     includeClientInfo: false
     includeHeaders: false
@@ -126,9 +123,9 @@ logging:
     maxPayloadLength: 10000
 
 # ==============================================================================
-# METRICS CONFIGURATION
+# METRICS CONFIGURATION (Used internally by Nginx /healthz probe)
 # ==============================================================================
 metrics:
-  # Prometheus scraping disabled by default to save CPU/RAM on free tier
-  enabled: false
-
+  prometheus:
+    enabled: true
+    endpoint: /metrics

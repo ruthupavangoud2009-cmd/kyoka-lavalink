@@ -1,12 +1,11 @@
 param(
     [string]$Url = $env:RENDER_SERVICE_URL,
-    [int]$Interval = 540
+    [int]$Interval = 540,
+    [string]$Password = $env:LAVALINK_SERVER_PASSWORD
 )
 
 if (-not $Url) {
-    Write-Host "Usage: .\scripts\keepalive.ps1 -Url 'https://kyoka-lavalink.onrender.com' -Interval 540" -ForegroundColor Yellow
-    exit 1
+    $Url = "https://kyoka-lavalink.onrender.com"
 }
 
-python "$PSScriptRoot\keepalive.py" --url "$Url" --interval $Interval
-
+python "$PSScriptRoot\keepalive.py" --url "$Url" --interval $Interval --password "$Password"

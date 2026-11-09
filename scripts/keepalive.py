@@ -2,9 +2,9 @@
 """
 24/7 Keep-Alive Worker for Kyoka Lavalink on Render Free.
 
-Pings the server periodically to reset Render's 15-minute inactivity idle timer.
-Sends the Authorization header when provided to avoid triggering 'Authorization missing'
-warnings in Lavalink's server logs.
+Pings /healthz periodically to reset Render's 15-minute inactivity idle timer.
+Validates that the Nginx edge gateway and the Lavalink backend are healthy,
+producing zero 'Authorization missing' warnings in the server logs.
 """
 import argparse
 import os
@@ -22,15 +22,20 @@ def parse_args():
         help="Render service URL (e.g. https://kyoka-lavalink.onrender.com)"
     )
     parser.add_argument(
+        "--endpoint",
+        default="/healthz",
+        help="Health check endpoint path (default: /healthz)"
+    )
+    parser.add_argument(
         "--password",
         default=os.getenv("LAVALINK_SERVER_PASSWORD") or os.getenv("LAVALINK_PASSWORD") or "",
-        help="Lavalink server password (optional, avoids 'Authorization missing' logs when provided)"
+        help="Optional authorization password if pinging /version directly"
     )
     parser.add_argument(
         "--interval",
         type=int,
         default=540,
-        help="Interval between pings in seconds (default: 540s = 9 minutes, well below Render's 15m idle limit)"
+        help="Interval between pings in seconds (default: 540s = 9 minutes, below Render 15m idle limit)"
     )
     parser.add_argument(
         "--once",
@@ -54,13 +59,13 @@ def clean_url(url: str) -> str:
             url = "http://" + url
     return url.rstrip("/")
 
-def ping_endpoint(url: str, password: str = None, timeout: float = 25.0):
-    endpoint = f"{url}/version"
-    headers = {"User-Agent": "KyokaKeepAlive/2.0"}
+def ping_endpoint(url: str, endpoint: str, password: str = None, timeout: float = 25.0):
+    full_url = f"{url}{endpoint}"
+    headers = {"User-Agent": "KyokaKeepAlive/3.0"}
     if password:
         headers["Authorization"] = password
 
-    req = urllib.request.Request(endpoint, headers=headers)
+    req = urllib.request.Request(full_url, headers=headers)
     start = time.perf_counter()
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -69,23 +74,21 @@ def ping_endpoint(url: str, password: str = None, timeout: float = 25.0):
             return True, resp.status, latency, content
     except urllib.error.HTTPError as e:
         latency = (time.perf_counter() - start) * 1000
-        # 401 still hits Render container and resets idle timer, but logs auth warning
         content = f"HTTP {e.code} {e.reason}"
-        return (e.code == 401 or e.code == 200), e.code, latency, content
+        return (e.code == 200), e.code, latency, content
     except Exception as e:
         latency = (time.perf_counter() - start) * 1000
         return False, 0, latency, str(e)
 
-def wake_up(url: str, password: str, max_timeout: int):
-    print(f"[*] Checking initial node state: {url}")
+def wake_up(url: str, endpoint: str, password: str, max_timeout: int):
+    print(f"[*] Checking initial node state: {url}{endpoint}")
     start_time = time.time()
     attempt = 1
     while time.time() - start_time < max_timeout:
         ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-        ok, code, lat, res = ping_endpoint(url, password=password, timeout=20.0)
-        if ok:
-            status_desc = "Authenticated (200 OK)" if code == 200 else f"Online (HTTP {code})"
-            print(f"[{ts}] [AWAKE] Node is active! Status: {status_desc}, Latency: {lat:.1f}ms")
+        ok, code, lat, res = ping_endpoint(url, endpoint, password=password, timeout=20.0)
+        if ok and code == 200:
+            print(f"[{ts}] [AWAKE] Node is active! Status: HTTP 200 OK, Latency: {lat:.1f}ms, Resp: {res}")
             return True
         print(f"[{ts}] [WAITING] Attempt {attempt}: Node warming up / cold-starting... ({res[:60]})")
         attempt += 1
@@ -95,23 +98,19 @@ def wake_up(url: str, password: str, max_timeout: int):
 
 def main():
     args = parse_args()
-    if not args.url:
-        print("[ERROR] Please provide --url or set RENDER_SERVICE_URL environment variable.")
-        sys.exit(1)
-
     base_url = clean_url(args.url)
+    endpoint = args.endpoint if args.endpoint.startswith("/") else f"/{args.endpoint}"
     password = args.password.strip()
 
-    print("=" * 68)
+    print("=" * 70)
     print(" KYOKA LAVALINK V4 - 24/7 KEEP-ALIVE WORKER")
-    print("=" * 68)
+    print("=" * 70)
     print(f" Target Service   : {base_url}")
-    print(f" Ping Target      : {base_url}/version")
-    print(f" Auth Header      : {'Configured (Clean 200 OK pings)' if password else 'None (Container awake via 401 probe)'}")
+    print(f" Ping Target      : {base_url}{endpoint}")
     print(f" Execution Mode   : {'Single Shot' if args.once else f'Continuous Loop (Every {args.interval}s)'}")
-    print("=" * 68)
+    print("=" * 70)
 
-    awake = wake_up(base_url, password, args.wake_timeout)
+    awake = wake_up(base_url, endpoint, password, args.wake_timeout)
     if not awake and args.once:
         sys.exit(1)
 
@@ -126,7 +125,7 @@ def main():
             time.sleep(args.interval)
             ping_count += 1
             ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-            ok, code, lat, res = ping_endpoint(base_url, password=password, timeout=20.0)
+            ok, code, lat, res = ping_endpoint(base_url, endpoint, password=password, timeout=20.0)
             status_tag = "[PONG-OK]" if ok else "[PONG-FAIL]"
             print(f"[{ts}] {status_tag} #{ping_count} Status: {code} | Latency: {lat:.1f}ms | Resp: {res[:40]}")
     except KeyboardInterrupt:

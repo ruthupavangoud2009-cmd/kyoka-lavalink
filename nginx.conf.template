@@ -1,0 +1,136 @@
+worker_processes 1;
+pid /tmp/nginx.pid;
+error_log /dev/stderr warn;
+
+events {
+    worker_connections 256;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    server_tokens off;
+
+    # Output logs to stdout for Render logging
+    access_log /dev/stdout combined;
+
+    upstream lavalink_backend {
+        server 127.0.0.1:2333;
+        keepalive 16;
+    }
+
+    server {
+        listen ${PORT} default_server;
+        server_name _;
+        client_max_body_size 10M;
+
+        # ----------------------------------------------------------------------
+        # 1. Public Homepage (No authentication required)
+        # Direct alias avoids internal rewrite to /index.html matching 404
+        # ----------------------------------------------------------------------
+        location = / {
+            default_type text/html;
+            alias /var/www/html/index.html;
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+        }
+
+        # ----------------------------------------------------------------------
+        # 2. Favicon Handling (No authentication required)
+        # ----------------------------------------------------------------------
+        location = /favicon.ico {
+            return 204;
+            access_log off;
+            log_not_found off;
+        }
+
+        # ----------------------------------------------------------------------
+        # 3. Public Health Check (Validates Lavalink Backend Health)
+        # ----------------------------------------------------------------------
+        location = /healthz {
+            # Uses subrequest to verify backend is responding before returning 200
+            auth_request /_internal_backend_probe;
+            default_type application/json;
+            return 200 '{"status":"healthy","backend":"lavalink-v4"}\n';
+        }
+
+        # Internal probe location: hits Lavalink unauthenticated /metrics
+        location = /_internal_backend_probe {
+            internal;
+            proxy_pass http://lavalink_backend/metrics;
+            proxy_pass_request_body off;
+            proxy_set_header Content-Length "";
+            proxy_connect_timeout 2s;
+            proxy_read_timeout 3s;
+        }
+
+        # If Lavalink is down or booting, auth_request returns 502 to caller
+        error_page 500 502 503 504 = @backend_down;
+        location @backend_down {
+            default_type application/json;
+            return 502 '{"status":"unhealthy","backend":"unavailable"}\n';
+        }
+
+        # ----------------------------------------------------------------------
+        # 4. Protected WebSocket Audio Gateway (/v4/websocket)
+        # ----------------------------------------------------------------------
+        location = /v4/websocket {
+            proxy_pass http://lavalink_backend/v4/websocket;
+            proxy_http_version 1.1;
+
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+
+            # Forward mandatory credentials and Discord session metadata
+            proxy_set_header Host $host;
+            proxy_set_header Authorization $http_authorization;
+            proxy_set_header User-Id $http_user_id;
+            proxy_set_header Client-Name $http_client_name;
+            proxy_set_header Session-Id $http_session_id;
+
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # Extended timeouts for long-running music playback sessions
+            proxy_read_timeout 86400s;
+            proxy_send_timeout 86400s;
+        }
+
+        # ----------------------------------------------------------------------
+        # 5. Protected REST API Endpoints (/v4/loadtracks, /v4/info, /v4/sessions/*)
+        # ----------------------------------------------------------------------
+        location /v4/ {
+            proxy_pass http://lavalink_backend/v4/;
+            proxy_http_version 1.1;
+
+            proxy_set_header Host $host;
+            proxy_set_header Authorization $http_authorization;
+            proxy_set_header Client-Name $http_client_name;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            proxy_connect_timeout 5s;
+            proxy_read_timeout 30s;
+        }
+
+        # ----------------------------------------------------------------------
+        # 6. Protected Version Endpoint (/version)
+        # ----------------------------------------------------------------------
+        location = /version {
+            proxy_pass http://lavalink_backend/version;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header Authorization $http_authorization;
+        }
+
+        # ----------------------------------------------------------------------
+        # 7. Reject Unknown Routes Locally
+        # Dropped by Nginx immediately; never reaches Java or generates logs
+        # ----------------------------------------------------------------------
+        location / {
+            default_type application/json;
+            return 404 '{"error":"Not Found","message":"Endpoint does not exist on this audio node."}\n';
+        }
+    }
+}
