@@ -66,7 +66,7 @@ trap cleanup SIGTERM SIGINT
 # ==============================================================================
 # 4. Launch Services in Order (Backend First, then Edge Gateway)
 # ==============================================================================
-JAVA_OPTS="${JAVA_OPTS:--Xmx256m -Xms96m -XX:MaxMetaspaceSize=160m -XX:ReservedCodeCacheSize=48m -XX:MaxDirectMemorySize=32m -Xss384k -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication}"
+JAVA_OPTS="${JAVA_OPTS:--Xmx256m -Xms96m -XX:MaxMetaspaceSize=160m -XX:ReservedCodeCacheSize=48m -XX:MaxDirectMemorySize=32m -Xss384k -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication}"
 
 echo "=================================================="
 echo " Starting Kyoka Lavalink V4 with Nginx Edge Proxy"
