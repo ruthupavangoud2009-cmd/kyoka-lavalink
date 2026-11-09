@@ -52,11 +52,11 @@ lavalink:
       channelMix: true
       lowPass: true
 
-    # Audio Engine & Buffer tuning for instant startup & buttery-smooth playback
-    bufferDurationMs: 400
-    frameBufferDurationMs: 3000
-    opusEncodingQuality: 5
-    resamplingQuality: LOW
+    # Audio Engine & Buffer tuning for buttery-smooth zero-lag streaming
+    bufferDurationMs: 5000
+    frameBufferDurationMs: 500
+    opusEncodingQuality: 7
+    resamplingQuality: MEDIUM
     trackStuckThresholdMs: 10000
     useSeekGhosting: true
     playerUpdateInterval: 5
