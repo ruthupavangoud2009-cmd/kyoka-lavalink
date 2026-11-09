@@ -52,11 +52,11 @@ lavalink:
       channelMix: true
       lowPass: true
 
-    # Audio Engine & Buffer tuning for instant start & zero stutter
-    bufferDurationMs: 1000
-    frameBufferDurationMs: 400
-    opusEncodingQuality: 10
-    resamplingQuality: HIGH
+    # Audio Engine & Buffer tuning for instant startup & buttery-smooth playback
+    bufferDurationMs: 400
+    frameBufferDurationMs: 3000
+    opusEncodingQuality: 5
+    resamplingQuality: LOW
     trackStuckThresholdMs: 10000
     useSeekGhosting: true
     playerUpdateInterval: 5
@@ -73,10 +73,11 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
-    # Client cascade order: Datacenter unblocked clients first, followed by fallbacks
+    # ANDROID_VR streams instant progressive WebM/Opus without HLS chunk delay;
+    # TVHTML5_SIMPLY & others serve as resilient fallbacks
     clients:
-      - TVHTML5_SIMPLY
       - ANDROID_VR
+      - TVHTML5_SIMPLY
       - ANDROID_TESTSUITE
       - ANDROID_MUSIC
       - TVHTML5EMBEDDED
