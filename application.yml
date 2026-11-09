@@ -52,11 +52,11 @@ lavalink:
       channelMix: true
       lowPass: true
 
-    # Audio Engine & Buffer tuning: 1000ms NAS jitter buffer + 10000ms lookahead frame buffer
-    bufferDurationMs: 1000
-    frameBufferDurationMs: 10000
-    opusEncodingQuality: 10
-    resamplingQuality: HIGH
+    # Audio Engine & Buffer tuning: 400ms NAS jitter buffer + 5000ms lookahead frame buffer
+    bufferDurationMs: 400
+    frameBufferDurationMs: 5000
+    opusEncodingQuality: 5
+    resamplingQuality: LOW
     trackStuckThresholdMs: 10000
     useSeekGhosting: true
     playerUpdateInterval: 5
@@ -73,34 +73,29 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
-    # MUSIC & ANDROID_MUSIC provide studio-grade, official song search results;
+    # MUSIC & WEB provide studio-grade, official song search results;
     # ANDROID_VR & TVHTML5_SIMPLY provide instant, unblocked progressive playback
     clients:
       - MUSIC
-      - ANDROID_MUSIC
       - WEB
       - ANDROID_VR
       - TVHTML5_SIMPLY
       - ANDROID_TESTSUITE
+      - ANDROID_MUSIC
       - TVHTML5EMBEDDED
       - WEBEMBEDDED
 
     clientOptions:
       MUSIC:
-        playback: true
+        playback: false
         searching: true
-        videoLoading: true
-        playlistLoading: true
-      ANDROID_MUSIC:
-        playback: true
-        searching: true
-        videoLoading: true
-        playlistLoading: true
+        videoLoading: false
+        playlistLoading: false
       WEB:
         playback: false
         searching: true
-        videoLoading: true
-        playlistLoading: true
+        videoLoading: false
+        playlistLoading: false
       ANDROID_VR:
         playback: true
         searching: false
@@ -111,13 +106,25 @@ plugins:
         searching: false
         videoLoading: true
         playlistLoading: true
+      ANDROID_TESTSUITE:
+        playback: true
+        searching: false
+        videoLoading: true
+        playlistLoading: true
+      TVHTML5EMBEDDED:
+        playback: true
+        searching: false
+        videoLoading: true
+        playlistLoading: true
 
   lavasrc:
     providers:
       # Order of resolution providers for Spotify tracks:
-      # 1. First try exact match via ISRC code on YouTube Music
-      # 2. Fall back to search query: "Artist - Title"
-      - "ytsearch:\"%ISRC%\""
+      # 1. Exact match via ISRC code on YouTube Music
+      # 2. Search query on YouTube Music: "Artist - Title"
+      # 3. Fallback search on YouTube video engine
+      - "ytmsearch:\"%ISRC%\""
+      - "ytmsearch:%QUERY%"
       - "ytsearch:%QUERY%"
     sources:
       spotify: true
