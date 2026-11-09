@@ -52,11 +52,11 @@ lavalink:
       channelMix: true
       lowPass: true
 
-    # Audio Engine & Buffer tuning: 400ms NAS jitter buffer + 5000ms lookahead frame buffer
-    bufferDurationMs: 400
-    frameBufferDurationMs: 5000
-    opusEncodingQuality: 5
-    resamplingQuality: LOW
+    # Audio Engine & Buffer tuning: 1000ms NAS jitter buffer + 10000ms lookahead frame buffer
+    bufferDurationMs: 1000
+    frameBufferDurationMs: 10000
+    opusEncodingQuality: 10
+    resamplingQuality: HIGH
     trackStuckThresholdMs: 10000
     useSeekGhosting: true
     playerUpdateInterval: 5
@@ -73,21 +73,26 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
-    # MUSIC & WEB provide studio-grade, official song search results;
+    # MUSIC & ANDROID_MUSIC provide studio-grade, official song search results;
     # ANDROID_VR & TVHTML5_SIMPLY provide instant, unblocked progressive playback
     clients:
       - MUSIC
+      - ANDROID_MUSIC
       - WEB
       - ANDROID_VR
       - TVHTML5_SIMPLY
       - ANDROID_TESTSUITE
-      - ANDROID_MUSIC
       - TVHTML5EMBEDDED
       - WEBEMBEDDED
 
     clientOptions:
       MUSIC:
-        playback: false
+        playback: true
+        searching: true
+        videoLoading: true
+        playlistLoading: true
+      ANDROID_MUSIC:
+        playback: true
         searching: true
         videoLoading: true
         playlistLoading: true
