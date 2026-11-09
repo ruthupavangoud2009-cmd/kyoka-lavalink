@@ -162,8 +162,8 @@ def validate_render_yaml():
     has_healthpath = "healthCheckPath: /healthz" in content
     all_ok = log_check("Render Health Check Path points to /healthz", has_healthpath) and all_ok
 
-    has_memory_opts = "-Xmx256m" in content
-    all_ok = log_check("Conservative Heap Limit configured (-Xmx256m)", has_memory_opts) and all_ok
+    has_memory_opts = bool(re.search(r"-Xmx(256|320)m", content))
+    all_ok = log_check("Conservative Heap Limit configured (-Xmx256m/-Xmx320m)", has_memory_opts) and all_ok
 
     return all_ok
 

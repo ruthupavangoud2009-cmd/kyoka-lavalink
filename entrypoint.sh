@@ -44,27 +44,62 @@ cleanup() {
 trap cleanup SIGTERM SIGINT
 
 # ==============================================================================
-# 4. Launch Services
+# 4. Launch Services in Order (Backend First, then Edge Gateway)
 # ==============================================================================
+JAVA_OPTS="${JAVA_OPTS:--Xmx320m -Xms128m -XX:MaxMetaspaceSize=160m -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication}"
+
 echo "=================================================="
 echo " Starting Kyoka Lavalink V4 with Nginx Edge Proxy"
 echo "--------------------------------------------------"
 echo " Public Port        : ${PORT}"
 echo " Backend Listen     : 127.0.0.1:2333 (Loopback)"
 echo " Password Protected : [YES] (${#LAVALINK_SERVER_PASSWORD} chars)"
-echo " Memory Options     : ${JAVA_OPTS:-Defaults}"
+echo " Memory Options     : ${JAVA_OPTS}"
 echo "=================================================="
 
-# Start Nginx
-nginx -g "daemon off;" &
-NGINX_PID=$!
+# Ensure execution context is /opt/Lavalink
+cd /opt/Lavalink
 
 # Start Lavalink bound strictly to 127.0.0.1 loopback
-java ${JAVA_OPTS:-} \
+java ${JAVA_OPTS} \
     -Dserver.address=127.0.0.1 \
     -Dserver.port=2333 \
     -jar /opt/Lavalink/Lavalink.jar &
 JAVA_PID=$!
+
+echo "[STARTUP] Lavalink Java backend initiated (PID: $JAVA_PID). Awaiting port 2333 readiness..."
+
+# Wait for Lavalink to be fully online and accepting connections before starting Nginx.
+# This completely eliminates "connect() failed (111: Connection refused)" in Nginx logs.
+READY=0
+for i in $(seq 1 60); do
+    if ! is_alive "$JAVA_PID"; then
+        echo "[STARTUP ERROR] Lavalink Java process terminated during boot! Check stderr above." >&2
+        EXIT_STATUS=1
+        exit 1
+    fi
+
+    # Probe port 2333 readiness via loopback
+    if curl -fsS --max-time 1 "http://127.0.0.1:2333/metrics" >/dev/null 2>&1 || \
+       curl -fsS --max-time 1 "http://127.0.0.1:2333/v4/info" -H "Authorization: ${LAVALINK_SERVER_PASSWORD}" >/dev/null 2>&1; then
+        echo "[STARTUP] Lavalink Java backend is fully ONLINE and accepting connections on 127.0.0.1:2333 (boot took ~${i}s)."
+        READY=1
+        break
+    fi
+
+    sleep 1
+done
+
+if [ "$READY" -ne 1 ]; then
+    echo "[STARTUP ERROR] Timed out waiting for Lavalink to bind to 127.0.0.1:2333 after 60s!" >&2
+    kill -TERM "$JAVA_PID" 2>/dev/null || true
+    exit 1
+fi
+
+# Start Nginx: Now that the backend is 100% online, Nginx edge proxy will never receive connection refused!
+echo "[STARTUP] Starting Nginx edge proxy on public port ${PORT}..."
+nginx -g "daemon off;" &
+NGINX_PID=$!
 
 # ==============================================================================
 # 5. Active Supervisor Loop (Zombie-Safe Process Monitoring)

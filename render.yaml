@@ -21,7 +21,7 @@ services:
       - key: LAVALINK_SERVER_PASSWORD
         sync: false
       - key: JAVA_OPTS
-        value: "-Xmx256m -Xms96m -XX:MaxMetaspaceSize=72m -XX:ReservedCodeCacheSize=48m -XX:MaxDirectMemorySize=32m -Xss384k -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication"
+        value: "-Xmx320m -Xms128m -XX:MaxMetaspaceSize=160m -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication"
       - key: SPOTIFY_CLIENT_ID
         sync: false
       - key: SPOTIFY_CLIENT_SECRET
