@@ -52,8 +52,8 @@ lavalink:
       channelMix: true
       lowPass: true
 
-    # Audio Engine & Buffer tuning for low latency & memory efficiency on 512MB RAM
-    bufferDurationMs: 4000
+    # Audio Engine & Buffer tuning for ultra-high fidelity & zero stutter
+    bufferDurationMs: 8000
     frameBufferDurationMs: 5000
     opusEncodingQuality: 10
     resamplingQuality: HIGH
@@ -73,14 +73,14 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
-    # Client cascade order: TVHTML5_SIMPLY & ANDROID_TESTSUITE bypass datacenter 403 blocks; MUSIC & WEB fallbacks
+    # Client cascade order: High-quality audio and guaranteed bypass of datacenter 403 blocks
     clients:
-      - TVHTML5_SIMPLY
+      - MUSIC
       - ANDROID_TESTSUITE
       - ANDROID_MUSIC
       - ANDROID
       - ANDROID_VR
-      - MUSIC
+      - TVHTML5EMBEDDED
       - WEB
       - WEBEMBEDDED
 
