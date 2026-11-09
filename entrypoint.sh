@@ -66,7 +66,7 @@ trap cleanup SIGTERM SIGINT
 # ==============================================================================
 # 4. Launch Services in Order (Backend First, then Edge Gateway)
 # ==============================================================================
-JAVA_OPTS="${JAVA_OPTS:--Xmx256m -Xms96m -XX:MaxMetaspaceSize=72m -XX:ReservedCodeCacheSize=48m -XX:MaxDirectMemorySize=32m -Xss384k -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication}"
+JAVA_OPTS="${JAVA_OPTS:--Xmx256m -Xms96m -XX:MaxMetaspaceSize=160m -XX:ReservedCodeCacheSize=48m -XX:MaxDirectMemorySize=32m -Xss384k -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication}"
 
 echo "=================================================="
 echo " Starting Kyoka Lavalink V4 with Nginx Edge Proxy"
@@ -91,7 +91,7 @@ echo "[STARTUP] Lavalink Java backend initiated (PID: $JAVA_PID). Awaiting port 
 
 # Wait for Lavalink to be fully online and accepting connections before starting Nginx.
 READY=0
-MAX_WAIT=90
+MAX_WAIT=120
 
 for i in $(seq 1 "$MAX_WAIT"); do
     if ! is_alive "$JAVA_PID"; then
@@ -101,11 +101,21 @@ for i in $(seq 1 "$MAX_WAIT"); do
     fi
 
     # Probe port 2333 readiness via loopback
-    if curl -fsS --max-time 1 "http://127.0.0.1:2333/metrics" >/dev/null 2>&1 || \
-       curl -fsS --max-time 1 -H "Authorization: ${LAVALINK_SERVER_PASSWORD}" "http://127.0.0.1:2333/v4/info" >/dev/null 2>&1; then
+    if curl -fsS --max-time 2 "http://127.0.0.1:2333/metrics" >/dev/null 2>&1 || \
+       curl -fsS --max-time 2 -H "Authorization: ${LAVALINK_SERVER_PASSWORD}" "http://127.0.0.1:2333/v4/info" >/dev/null 2>&1; then
         echo "[STARTUP] Lavalink Java backend is fully ONLINE and accepting connections on 127.0.0.1:2333 (boot took ~${i}s)."
         READY=1
         break
+    fi
+
+    # Periodic heartbeat diagnostics every 10 seconds to trace startup progress in Render logs
+    if [ $((i % 10)) -eq 0 ]; then
+        MEM_RSS=$(awk '/VmRSS/{print $2 " " $3}' "/proc/$JAVA_PID/status" 2>/dev/null || echo "N/A")
+        PORT_OPEN="NO"
+        if grep -q "091D" /proc/net/tcp 2>/dev/null; then
+            PORT_OPEN="YES"
+        fi
+        echo "[STARTUP WAIT] Still waiting for Lavalink backend (elapsed: ${i}s/${MAX_WAIT}s | PID: $JAVA_PID | RSS: $MEM_RSS | Port 2333 bound: $PORT_OPEN)..."
     fi
 
     sleep 1
@@ -113,6 +123,14 @@ done
 
 if [ "$READY" -ne 1 ]; then
     echo "[STARTUP ERROR] Timed out waiting for Lavalink to bind to 127.0.0.1:2333 after ${MAX_WAIT}s!" >&2
+    echo "[STARTUP DIAGNOSTICS] Process status:" >&2
+    cat "/proc/$JAVA_PID/status" 2>/dev/null | grep -E "State|VmSize|VmRSS|Threads" >&2 || true
+    echo "[STARTUP DIAGNOSTICS] Open TCP listeners:" >&2
+    grep "091D" /proc/net/tcp 2>/dev/null >&2 || echo "No listener on port 2333 (091D)." >&2
+    if [ -d "/opt/Lavalink/logs" ]; then
+        echo "[STARTUP DIAGNOSTICS] Recent application logs:" >&2
+        tail -n 30 /opt/Lavalink/logs/* 2>/dev/null >&2 || true
+    fi
     kill -TERM "$JAVA_PID" 2>/dev/null || true
     wait "$JAVA_PID" 2>/dev/null || true
     exit 1
