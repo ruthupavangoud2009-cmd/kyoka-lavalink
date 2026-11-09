@@ -52,11 +52,11 @@ lavalink:
       channelMix: true
       lowPass: true
 
-    # Audio Engine & Buffer tuning: 400ms NAS jitter buffer + 5000ms lookahead frame buffer
-    bufferDurationMs: 400
-    frameBufferDurationMs: 5000
-    opusEncodingQuality: 5
-    resamplingQuality: LOW
+    # Audio Engine & Buffer tuning: 1000ms NAS jitter buffer + 10000ms lookahead frame buffer
+    bufferDurationMs: 1000
+    frameBufferDurationMs: 10000
+    opusEncodingQuality: 10
+    resamplingQuality: HIGH
     trackStuckThresholdMs: 10000
     useSeekGhosting: true
     playerUpdateInterval: 5
@@ -89,13 +89,13 @@ plugins:
       MUSIC:
         playback: false
         searching: true
-        videoLoading: false
-        playlistLoading: false
+        videoLoading: true
+        playlistLoading: true
       WEB:
         playback: false
         searching: true
-        videoLoading: false
-        playlistLoading: false
+        videoLoading: true
+        playlistLoading: true
       ANDROID_VR:
         playback: true
         searching: false
