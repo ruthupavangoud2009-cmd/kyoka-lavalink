@@ -73,13 +73,15 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
-    # Client cascade order: TVHTML5_SIMPLY and TV bypass datacenter login blocks; Android/Web fallbacks
+    # Client cascade order: Datacenter unblocked clients first, followed by fallbacks
     clients:
       - TVHTML5_SIMPLY
-      - TV
       - ANDROID_VR
-      - WEB
+      - ANDROID_TESTSUITE
+      - ANDROID_MUSIC
+      - TVHTML5EMBEDDED
       - WEBEMBEDDED
+      - WEB
       - MUSIC
 
   lavasrc:
