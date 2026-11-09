@@ -21,10 +21,30 @@ envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 nginx -t -c /etc/nginx/nginx.conf
 
 # ==============================================================================
-# 3. Process Tracking & Signal Traps
+# 3. Process Tracking, State Verification & Signal Traps
 # ==============================================================================
 NGINX_PID=0
 JAVA_PID=0
+
+# Zombie-safe process state inspection (MUST be declared before any invocation)
+is_alive() {
+    local pid="${1:-}"
+    if [ -z "$pid" ] || [ "$pid" -le 0 ] 2>/dev/null; then
+        return 1
+    fi
+    if ! kill -0 "$pid" 2>/dev/null; then
+        return 1
+    fi
+    # If /proc is available, check for zombie (Z) or dead (X/x) state
+    if [ -f "/proc/$pid/stat" ]; then
+        local state
+        state=$(awk '{print $3}' "/proc/$pid/stat" 2>/dev/null || echo "Z")
+        if [ "$state" = "Z" ] || [ "$state" = "X" ] || [ "$state" = "x" ]; then
+            return 1
+        fi
+    fi
+    return 0
+}
 
 cleanup() {
     echo "[SUPERVISOR] Termination signal received. Initiating graceful shutdown..."
@@ -46,7 +66,7 @@ trap cleanup SIGTERM SIGINT
 # ==============================================================================
 # 4. Launch Services in Order (Backend First, then Edge Gateway)
 # ==============================================================================
-JAVA_OPTS="${JAVA_OPTS:--Xmx320m -Xms128m -XX:MaxMetaspaceSize=160m -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication}"
+JAVA_OPTS="${JAVA_OPTS:--Xmx256m -Xms96m -XX:MaxMetaspaceSize=72m -XX:ReservedCodeCacheSize=48m -XX:MaxDirectMemorySize=32m -Xss384k -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication}"
 
 echo "=================================================="
 echo " Starting Kyoka Lavalink V4 with Nginx Edge Proxy"
@@ -60,7 +80,7 @@ echo "=================================================="
 # Ensure execution context is /opt/Lavalink
 cd /opt/Lavalink
 
-# Start Lavalink bound strictly to 127.0.0.1 loopback
+# Start Lavalink bound strictly to 127.0.0.1 loopback (executed exactly once)
 java ${JAVA_OPTS} \
     -Dserver.address=127.0.0.1 \
     -Dserver.port=2333 \
@@ -70,18 +90,19 @@ JAVA_PID=$!
 echo "[STARTUP] Lavalink Java backend initiated (PID: $JAVA_PID). Awaiting port 2333 readiness..."
 
 # Wait for Lavalink to be fully online and accepting connections before starting Nginx.
-# This completely eliminates "connect() failed (111: Connection refused)" in Nginx logs.
 READY=0
-for i in $(seq 1 60); do
+MAX_WAIT=90
+
+for i in $(seq 1 "$MAX_WAIT"); do
     if ! is_alive "$JAVA_PID"; then
         echo "[STARTUP ERROR] Lavalink Java process terminated during boot! Check stderr above." >&2
-        EXIT_STATUS=1
+        wait "$JAVA_PID" 2>/dev/null || true
         exit 1
     fi
 
     # Probe port 2333 readiness via loopback
     if curl -fsS --max-time 1 "http://127.0.0.1:2333/metrics" >/dev/null 2>&1 || \
-       curl -fsS --max-time 1 "http://127.0.0.1:2333/v4/info" -H "Authorization: ${LAVALINK_SERVER_PASSWORD}" >/dev/null 2>&1; then
+       curl -fsS --max-time 1 -H "Authorization: ${LAVALINK_SERVER_PASSWORD}" "http://127.0.0.1:2333/v4/info" >/dev/null 2>&1; then
         echo "[STARTUP] Lavalink Java backend is fully ONLINE and accepting connections on 127.0.0.1:2333 (boot took ~${i}s)."
         READY=1
         break
@@ -91,8 +112,9 @@ for i in $(seq 1 60); do
 done
 
 if [ "$READY" -ne 1 ]; then
-    echo "[STARTUP ERROR] Timed out waiting for Lavalink to bind to 127.0.0.1:2333 after 60s!" >&2
+    echo "[STARTUP ERROR] Timed out waiting for Lavalink to bind to 127.0.0.1:2333 after ${MAX_WAIT}s!" >&2
     kill -TERM "$JAVA_PID" 2>/dev/null || true
+    wait "$JAVA_PID" 2>/dev/null || true
     exit 1
 fi
 
@@ -104,19 +126,6 @@ NGINX_PID=$!
 # ==============================================================================
 # 5. Active Supervisor Loop (Zombie-Safe Process Monitoring)
 # ==============================================================================
-is_alive() {
-    local pid=$1
-    if [ ! -d "/proc/$pid" ]; then
-        return 1
-    fi
-    local state
-    state=$(awk '{print $3}' "/proc/$pid/stat" 2>/dev/null || echo "Z")
-    if [ "$state" = "Z" ] || [ -z "$state" ]; then
-        return 1
-    fi
-    return 0
-}
-
 EXIT_STATUS=0
 
 while true; do
