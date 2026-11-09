@@ -19,7 +19,7 @@ services:
     autoDeploy: true
     envVars:
       - key: LAVALINK_SERVER_PASSWORD
-        generateValue: true
+        sync: false
       - key: JAVA_OPTS
         value: "-Xmx256m -Xms96m -XX:MaxMetaspaceSize=72m -XX:ReservedCodeCacheSize=48m -XX:MaxDirectMemorySize=32m -Xss384k -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+ExitOnOutOfMemoryError -XX:+UseStringDeduplication"
       - key: SPOTIFY_CLIENT_ID

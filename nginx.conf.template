@@ -26,11 +26,11 @@ http {
 
         # ----------------------------------------------------------------------
         # 1. Public Homepage (No authentication required)
-        # Direct alias avoids internal rewrite to /index.html matching 404
         # ----------------------------------------------------------------------
         location = / {
             default_type text/html;
-            alias /var/www/html/index.html;
+            root /var/www/html;
+            try_files /index.html =404;
             add_header Cache-Control "no-cache, no-store, must-revalidate";
         }
 
@@ -134,3 +134,4 @@ http {
         }
     }
 }
+

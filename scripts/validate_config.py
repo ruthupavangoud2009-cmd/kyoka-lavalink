@@ -79,7 +79,10 @@ def validate_nginx_template():
     content = ng_path.read_text(encoding="utf-8")
 
     all_ok = True
-    has_homepage = "location = / {" in content and "alias /var/www/html/index.html" in content
+    has_homepage = "location = / {" in content and (
+        "alias /var/www/html/index.html" in content
+        or ("root /var/www/html" in content and "try_files /index.html" in content)
+    )
     all_ok = log_check("Direct Homepage Alias (Prevents 404 rewrite trap)", has_homepage) and all_ok
 
     has_favicon = "location = /favicon.ico {" in content and "return 204;" in content
