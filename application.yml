@@ -76,6 +76,10 @@ plugins:
     # MUSIC provides studio-grade, official song search results;
     # ANDROID_VR & TVHTML5_SIMPLY provide unblocked search & progressive playback
     clients:
+      - TV
+      - IOS
+      - MWEB
+      - WEBEMBEDDED
       - MUSIC
       - ANDROID_VR
       - TVHTML5_SIMPLY
@@ -84,8 +88,28 @@ plugins:
       - ANDROID_TESTSUITE
 
     clientOptions:
+      TV:
+        playback: true
+        searching: true
+        videoLoading: true
+        playlistLoading: true
+      IOS:
+        playback: true
+        searching: true
+        videoLoading: true
+        playlistLoading: true
+      MWEB:
+        playback: true
+        searching: true
+        videoLoading: true
+        playlistLoading: true
+      WEBEMBEDDED:
+        playback: true
+        searching: true
+        videoLoading: true
+        playlistLoading: true
       MUSIC:
-        playback: false
+        playback: true
         searching: true
         videoLoading: true
         playlistLoading: true
@@ -105,7 +129,7 @@ plugins:
         videoLoading: true
         playlistLoading: true
       WEB:
-        playback: false
+        playback: true
         searching: true
         videoLoading: true
         playlistLoading: true
