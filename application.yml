@@ -73,20 +73,28 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
-    # MUSIC & ANDROID_MUSIC provide studio-grade, official song search results;
-    # TVHTML5EMBEDDED, ANDROID_VR & TVHTML5_SIMPLY provide unblocked progressive playback
+    # MUSIC provides studio-grade, official song search results;
+    # ANDROID_VR & TVHTML5_SIMPLY provide unblocked search & progressive playback
     clients:
       - MUSIC
-      - ANDROID_MUSIC
-      - TVHTML5EMBEDDED
       - ANDROID_VR
-      - WEB
       - TVHTML5_SIMPLY
+      - ANDROID_MUSIC
+      - WEB
       - ANDROID_TESTSUITE
-      - WEBEMBEDDED
 
     clientOptions:
       MUSIC:
+        playback: true
+        searching: true
+        videoLoading: true
+        playlistLoading: true
+      ANDROID_VR:
+        playback: true
+        searching: true
+        videoLoading: true
+        playlistLoading: true
+      TVHTML5_SIMPLY:
         playback: true
         searching: true
         videoLoading: true
@@ -96,29 +104,14 @@ plugins:
         searching: true
         videoLoading: true
         playlistLoading: true
-      TVHTML5EMBEDDED:
-        playback: true
-        searching: false
-        videoLoading: true
-        playlistLoading: true
-      ANDROID_VR:
-        playback: true
-        searching: false
-        videoLoading: true
-        playlistLoading: true
       WEB:
         playback: false
         searching: true
         videoLoading: true
         playlistLoading: true
-      TVHTML5_SIMPLY:
-        playback: true
-        searching: false
-        videoLoading: true
-        playlistLoading: true
       ANDROID_TESTSUITE:
         playback: true
-        searching: false
+        searching: true
         videoLoading: true
         playlistLoading: true
 
