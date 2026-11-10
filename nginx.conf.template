@@ -53,12 +53,14 @@ http {
             return 200 '{"status":"healthy","backend":"lavalink-v4"}\n';
         }
 
-        # Internal probe location: hits Lavalink unauthenticated /metrics
+        # Internal probe location: hits Lavalink backend with GET and valid auth
         location = /_internal_backend_probe {
             internal;
-            proxy_pass http://lavalink_backend/metrics;
+            proxy_pass http://lavalink_backend/v4/info;
+            proxy_method GET;
             proxy_pass_request_body off;
             proxy_set_header Content-Length "";
+            proxy_set_header Authorization "${LAVALINK_SERVER_PASSWORD}";
             proxy_connect_timeout 2s;
             proxy_read_timeout 3s;
         }

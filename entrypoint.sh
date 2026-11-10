@@ -13,11 +13,12 @@ fi
 
 PORT="${PORT:-10000}"
 export PORT
+export LAVALINK_SERVER_PASSWORD
 
 # ==============================================================================
 # 2. Template Generation & Syntax Verification
 # ==============================================================================
-envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+envsubst '${PORT} ${LAVALINK_SERVER_PASSWORD}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 nginx -t -c /etc/nginx/nginx.conf
 
 # ==============================================================================
