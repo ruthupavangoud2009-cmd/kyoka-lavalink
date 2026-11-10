@@ -85,7 +85,7 @@ plugins:
 
     clientOptions:
       MUSIC:
-        playback: true
+        playback: false
         searching: true
         videoLoading: true
         playlistLoading: true
