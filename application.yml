@@ -52,9 +52,9 @@ lavalink:
       channelMix: true
       lowPass: true
 
-    # Audio Engine & Buffer tuning: 1000ms NAS jitter buffer + 10000ms lookahead frame buffer
-    bufferDurationMs: 1000
-    frameBufferDurationMs: 10000
+    # Audio Engine & Buffer tuning: 400ms NAS jitter buffer + 5000ms lookahead frame buffer
+    bufferDurationMs: 400
+    frameBufferDurationMs: 5000
     opusEncodingQuality: 10
     resamplingQuality: HIGH
     trackStuckThresholdMs: 10000
@@ -73,32 +73,42 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
-    # MUSIC & WEB provide studio-grade, official song search results;
-    # ANDROID_VR & TVHTML5_SIMPLY provide instant, unblocked progressive playback
+    # MUSIC & ANDROID_MUSIC provide studio-grade, official song search results;
+    # TVHTML5EMBEDDED, ANDROID_VR & TVHTML5_SIMPLY provide unblocked progressive playback
     clients:
       - MUSIC
-      - WEB
-      - ANDROID_VR
-      - TVHTML5_SIMPLY
-      - ANDROID_TESTSUITE
       - ANDROID_MUSIC
       - TVHTML5EMBEDDED
+      - ANDROID_VR
+      - WEB
+      - TVHTML5_SIMPLY
+      - ANDROID_TESTSUITE
       - WEBEMBEDDED
 
     clientOptions:
       MUSIC:
-        playback: false
+        playback: true
         searching: true
         videoLoading: true
         playlistLoading: true
-      WEB:
-        playback: false
+      ANDROID_MUSIC:
+        playback: true
         searching: true
+        videoLoading: true
+        playlistLoading: true
+      TVHTML5EMBEDDED:
+        playback: true
+        searching: false
         videoLoading: true
         playlistLoading: true
       ANDROID_VR:
         playback: true
         searching: false
+        videoLoading: true
+        playlistLoading: true
+      WEB:
+        playback: false
+        searching: true
         videoLoading: true
         playlistLoading: true
       TVHTML5_SIMPLY:
@@ -107,11 +117,6 @@ plugins:
         videoLoading: true
         playlistLoading: true
       ANDROID_TESTSUITE:
-        playback: true
-        searching: false
-        videoLoading: true
-        playlistLoading: true
-      TVHTML5EMBEDDED:
         playback: true
         searching: false
         videoLoading: true
